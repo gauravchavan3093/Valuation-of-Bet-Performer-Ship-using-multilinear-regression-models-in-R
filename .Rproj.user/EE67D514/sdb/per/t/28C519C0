@@ -1,0 +1,20 @@
+{
+    "collab_server" : "",
+    "contents" : "---\ntitle: \"Stat 610 Class Project\"\nauthor: \"Andrew Armstrong, Gaurav Chavan, Shashank Gupta, Alexander Graber, Faiz Nassur, Sandeep Suresh\"\ndate: \"11/9/2017\"\noutput: html_document\n---\n\n```{r setup, include=FALSE}\nknitr::opts_chunk$set(echo = TRUE)\n```\n\n## R Markdown\n\n*Who is Tom Roberts?*\nFounding partner of Compass Maritime Services, a New Jersey–based firm specializing in the sale and purchase of ships and offshore vessels (“S&P brokers”).\n\n*What is the task at hand for Basil Karatzas?*\nIdentify a specific ship and suggest a reasonable price to offer, and have some suggestions regarding the negotiation strategy.\n\n*What ship features determine comparability (and value)?*\nShip type (e.g., capesize vs. Panamax)\nAge (typical max of 25 years)\nSize (measured in deadweight tons (DWT)\nCondition\n\n*What is the market approach to valuation?*\nSets value equaled the market price of a recently completed sale of a comparable ship between a willing and knowledgeable buyer and a willing and knowledgeable seller in an arm’s-length transaction\n\nIn normalized and efficient markets, the price of a vessel is simply what a buyer, cognizant of the relevant facts and under no compulsion to act, would pay to acquire the asset from a knowledgeable seller equally under no compulsion to act. . . . [Both] the commercial and the academic values usually converge to the purchase price that a rational, well-informed investor (buyer) would pay for the acquisition of the vessel.\n\n\n**Key Questions to Think About the Next 4 Weeks**\n1. How much is the Bet Performer worth based on comparable transactions? Which ship is the best reference transaction?\n2. Can you think of other factors that may affect ship prices?\n3. What is the relationship between ship price and each ship feature in Exhibit 4?  What is the economic logic for why each feature might affect ship price?\n4. Which single feature is the best predictor of ship price?\n5. How well do all three ship features jointly explain ship prices?\n6. What would the price be if the ship was 5 years younger? 20K Deadweight Tons lighter? Or if charter rates were 30% lower?\n7. If you were Basil Karatzas, what would you recommend to your client regarding an offer price for the Bet Performer?\n8. What other concerns or recommendations do you have?",
+    "created" : 1510503231405.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "4263106762",
+    "id" : "28C519C0",
+    "lastKnownWriteTime" : 1510668917,
+    "last_content_update" : 1510668917170,
+    "path" : "~/Documents/*SCHOOL/*Drexel/STAT 610 - Stats for Busn Analytics/STAT610 Project/Stat 610 Class Project markdown.Rmd",
+    "project_path" : "Stat 610 Class Project markdown.Rmd",
+    "properties" : {
+    },
+    "relative_order" : 2,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_markdown"
+}

@@ -1,0 +1,435 @@
+# STAT 610 Class Project
+# Andrew Armstrong, Gaurav Chavan, Shashank Gupta, Alexander Graber, Faiz Nassur, Sandeep Suresh
+
+#--------------------------------------------------------------------------------------------------
+
+# Optional: Load prior workspace
+load("STAT 610 Class Project.RData")
+
+# Install packages (disable after installing the first time)
+install.packages('tidyverse')
+install.packages('car')
+install.packages('cowplot')
+install.packages('corrplot')
+install.packages("relaimpo")
+library(tidyverse)
+library(car)
+library(cowplot)
+library(corrplot)
+library(relaimpo)
+#--------------------------------------------------------------------------------------------------
+### Import Compass Maritime Data
+
+# Assumes data file lives in same folder as R sript
+ships <- read.csv("Compass Maritime Data_Add Info.csv",
+                   header=TRUE, 
+                   sep = ",",
+                   stringsAsFactors=FALSE)
+
+# The data file for this week contains attributes for ships.
+# Value (and comparability) is determined by:
+  # Ship type (e.g., capesize vs. Panamax)
+  # Age (typical max of 25 years)
+  # DWT (deadweight tons)
+  # Index (capesize Index)
+  # Condition
+# Our goal is to figure out which attributes are most predictive of price, and 
+# identify recommended price and negotiating strategy for the Bet Performer.
+
+
+#--------------------------------------------------------------------------------------------------
+### Data Cleaning
+
+# Relabel headers for convenience
+col_headings <- c('ID','SalesDate','Name','SalePrice','YearBuilt','AgeAtSale','DWT','Index',
+                  'Speed','Draught','Tons','USD_Units','Units_USD','Length','Width')
+names(ships) <- col_headings
+
+# Remove ID (since it's included in data frame)
+ships$ID <- NULL
+
+# # Fix dates
+# dates <- ships$SalesDate
+# betterDates <- as.Date(dates, origin = "1899-12-30")
+# ships$SalesDate <- betterDates
+
+attach(ships)
+
+#--------------------------------------------------------------------------------------------------
+### Draw scatterplots of value vs. each attribute to visually ascertain relationships
+Date.gg <- ggplot(data=ships, aes(x=SalesDate,y=SalePrice)) + 
+  geom_point(colour = "blue", size = 3) + 
+  ggtitle("Sales Price * Sales Date") + 
+  labs(x = "Sales Date", y = "Sale Price ($ US Mil)") +
+  theme_light()
+
+Age.gg <- ggplot(data=ships,aes(x=AgeAtSale,y=SalePrice)) + 
+  geom_point(colour = "blue", size = 3) + 
+  ggtitle("Sale Price * Age") + 
+  labs(x = "Age (years)", y = "Sale Price ($ US Mil)") +
+  theme_light()
+
+DWT.gg <- ggplot(data=ships,aes(x=DWT,y=SalePrice)) + 
+  geom_point(colour = "blue", size = 3) + 
+  ggtitle("Sale Price * Dead Weight Tons") + 
+  labs(x = "Dead Weight Tons", y = "Sale Price ($ US Mil)")+
+  theme_light() 
+
+Index.gg <- ggplot(data=ships,aes(x=Index,y=SalePrice)) + 
+  geom_point(colour = "blue", size = 3) + 
+  ggtitle("Sale Price * Trailing 1-year CapeSize Index") + 
+  labs(x = "Trailing 1-year CapeSize Index", y = "Sale Price ($ US Mil)") +
+  theme_light()
+
+Speed.gg <- ggplot(data=ships,aes(x=Speed,y=SalePrice)) + 
+  geom_point(colour = "blue", size = 3) + 
+  ggtitle("Sale Price * Average Speed") + 
+  labs(x = "Average Speed", y = "Sale Price ($ US Mil)") +
+  theme_light()
+
+Draught.gg <- ggplot(data=ships,aes(x=Draught,y=SalePrice)) + 
+  geom_point(colour = "blue", size = 3) + 
+  ggtitle("Sale Price * Draught") + 
+  labs(x = "Draught (m)", y = "Sale Price ($ US Mil)") +
+  theme_light()
+
+Tons.gg <- ggplot(data=ships,aes(x=Tons,y=SalePrice)) + 
+  geom_point(colour = "blue", size = 3) + 
+  ggtitle("Sale Price * Gross Tonnage") + 
+  labs(x = "Gross Tonnage", y = "Sale Price ($ US Mil)") +
+  theme_light()
+
+# USD_Units.gg <- ggplot() + 
+  # geom_point(data=ships,aes(x=USD_Units,y=SalePrice))
+# Units_USD.gg <- ggplot() + 
+  # geom_point(data=ships,aes(x=Units_USD,y=SalePrice))
+
+Length.gg <- ggplot(data=ships,aes(x=Length,y=SalePrice)) + 
+  geom_point(colour = "blue", size = 3) + 
+  ggtitle("Sale Price * Length") + 
+  labs(x = "Length (m)", y = "Sale Price ($ US Mil)") +
+  theme_light()
+
+Width.gg <- ggplot(data=ships,aes(x=Width,y=SalePrice)) + 
+  geom_point(colour = "blue", size = 3) + 
+  ggtitle("Sale Price * Width") + 
+  labs(x = "Width (m)", y = "Sale Price ($ US Mil)") +
+  theme_light()
+
+
+plot_grid(Date.gg, Age.gg, DWT.gg, Index.gg)
+plot_grid(Length.gg, Width.gg, Draught.gg, Tons.gg, Speed.gg)
+# plot_grid(USD_Units.gg, Units_USD.gg)
+
+# Age, DWT, Index, Speed look reasonably linear
+# All except Age look like they'll have relatively high error
+### look at plots to identify other variables with potential linear relationship
+
+# # probably not that useful, but looks pretty!
+# scatterplotMatrix( formula = ~ SalePrice + SalesDate + AgeAtSale + DWT + USD_Units + Units_USD,
+#                    data = ships, diagonal="histogram")
+# scatterplotMatrix( formula = ~ SalePrice + Index + Length + Width + Draught + Tons + DWT + Speed,
+#                    data = ships, diagonal="histogram")
+# # Note that there are smoothing lines and histograms on the diagonal now.
+
+#--------------------------------------------------------------------------------------------------
+### Identify relationships between attributes
+
+# Correlations
+ListCor <- ships %>%
+  mutate(Date.cor = cor(SalePrice,as.numeric(SalesDate))) %>%
+  mutate(Age.cor = cor(SalePrice,AgeAtSale)) %>%
+  mutate(DWT.cor = cor(SalePrice,DWT)) %>%
+  mutate(Index.cor = cor(SalePrice,Index)) %>%
+  mutate(Speed.cor = cor(SalePrice,Speed)) %>%
+  mutate(Draught.cor = cor(SalePrice,Draught)) %>%
+  mutate(Tons.cor = cor(SalePrice,Tons)) %>%
+  mutate(USD_Units.cor = cor(SalePrice,USD_Units, use="na.or.complete")) %>%
+  mutate(Units_USD.cor = cor(SalePrice,Units_USD, use="na.or.complete")) %>%
+  mutate(Length.cor = cor(SalePrice,Length)) %>%
+  mutate(Width.cor = cor(SalePrice,Width)) %>%
+  select(ends_with(".cor")) %>%
+  sample_n(1) %>%
+  remove_rownames()
+
+ListCor
+abs(ListCor)
+### SalePrice * Age has correlation closest to 1, meaning it is has best correlation with value.  
+  # The correlation is in a negative direction, meaning that as age increases, value decreases.
+### DWT and Draught are second most closely correlated with SalePrice
+
+
+### run correlation matrix of all combinations of independent variables to avoid collinear variables
+# correlation matrix
+cors <- ships %>%
+  select(SalePrice, AgeAtSale,DWT,Index,Speed,Draught,Tons,USD_Units,Units_USD,Length,Width) %>%
+  cor(use="na.or.complete")
+
+corrplot(cors, order="FPC",
+         col=colorRampPalette(c("red","gray","blue"))(12))
+
+corrplot.mixed(cors, 
+               upper="circle",
+               lower = "number", 
+               order="FPC",
+               tl.col="black", tl.cex=.8,
+               upper.col=colorRampPalette(c("red","lightgray","blue"))(12),
+               lower.col=colorRampPalette(c("red","grey","blue"))(12), number.cex=.7)
+### Don't combine size attributes in mixed regression model (length,width,dwt,tons) - strong correlations
+### Don't combine Age & Draught
+### Caution with Age & DWT
+
+#--------------------------------------------------------------------------------------------------
+### Linear regressions
+  # lm(Y ~ X) --> explain Y based on X
+
+## Ordered by Adjusted R2 ##
+
+# Age is the best single predictor
+Age.lm <- lm(SalePrice ~ AgeAtSale, data=ships) 
+  summary(Age.lm)
+    # Multiple R-squared:  0.6201,	Adjusted R-squared:  0.6119 
+    # F-statistic:  75.1 on 1 and 46 DF,  p-value: 3.147e-11
+  
+DWT.lm <- lm(SalePrice ~ DWT, data=ships) 
+  summary(DWT.lm)
+    # Multiple R-squared:  0.2652,	Adjusted R-squared:  0.2493 
+    # F-statistic:  16.6 on 1 and 46 DF,  p-value: 0.0001802
+
+Draught.lm <- lm(SalePrice ~ Draught, data=ships) 
+  summary(Draught.lm)
+    # Multiple R-squared:  0.2216,	Adjusted R-squared:  o.2047 
+    # F-statistic: 13.1 on 1 and 46 DF,  p-value: 0.000733
+
+Tons.lm <- lm(SalePrice ~ Tons, data=ships)  
+  summary(Tons.lm)
+    # Multiple R-squared:  0.1629,	Adjusted R-squared:  0.1447 
+    # F-statistic: 8.952 on 1 and 46 DF,  p-value: 0.004444
+
+Length.lm <- lm(SalePrice ~ Length, data=ships) 
+  summary(Length.lm)
+    # Multiple R-squared:  0.1348,	Adjusted R-squared:  0.116 
+    # F-statistic: 7.169 on 1 and 46 DF,  p-value: 0.01025
+  
+Date.lm <- lm(SalePrice ~ SalesDate, data=ships)
+  summary(Date.lm)
+    # Multiple R-squared:  0.1219,	Adjusted R-squared:  0.1028 
+    # F-statistic: 6.385 on 1 and 46 DF,  p-value: 0.0151
+ 
+Index.lm <- lm(SalePrice ~ Index, data=ships) 
+  summary(Index.lm)
+    # Multiple R-squared:  0.1207,	Adjusted R-squared:  0.1016 
+    # F-statistic: 6.315 on 1 and 46 DF,  p-value: 0.01554
+
+Speed.lm <- lm(SalePrice ~ Speed, data=ships) 
+  summary(Speed.lm)
+    # Multiple R-squared:  0.09496,	Adjusted R-squared:  0.07529 
+    # F-statistic: 4.827 on 1 and 46 DF,  p-value: 0.0331
+  
+Width.lm <- lm(SalePrice ~ Width, data=ships) 
+  summary(Width.lm)
+    # Multiple R-squared:  0.08944,	Adjusted R-squared:  0.06964 
+    # F-statistic: 4.518 on 1 and 46 DF,  p-value: 0.03894
+
+
+plot_grid(Date.gg + geom_smooth(method="lm"),
+          Age.gg + geom_smooth(method="lm"),
+          DWT.gg + geom_smooth(method="lm"),
+          Index.gg + geom_smooth(method="lm"))
+
+plot_grid(Length.gg + geom_smooth(method="lm"), 
+          Width.gg + geom_smooth(method="lm"),
+          Draught.gg + geom_smooth(method="lm"),
+          Tons.gg + geom_smooth(method="lm"),
+          Speed.gg + geom_smooth(method="lm"))
+
+#--------------------------------------------------------------------------------------------------
+### Multiple Regression ###
+
+# ALL variables
+  # use caution: dimension metrics highly correlated; Age, DWT correlated
+All.lm <- lm(SalePrice ~ SalesDate + AgeAtSale + DWT + Index + 
+               Speed + Draught + Tons + Length + Width, 
+             data=ships)
+  summary(All.lm)    
+    # Multiple R-squared:  0.9246,	Adjusted R-squared:  0.9068 
+    # F-statistic: 51.81 on 9 and 38 DF,  p-value: < 2.2e-16
+# Not that great considering all of the additional variables included
+  
+# based on all *provided* variables
+  # use caution: Age, DWT correlated
+Provided.lm <- lm(SalePrice ~ SalesDate + AgeAtSale + DWT + Index, data=ships) 
+  summary(Provided.lm)
+    # Multiple R-squared:  0.9209,	Adjusted R-squared:  0.9136 
+    # F-statistic:   125.2 on 4 and 43 DF,  p-value: < 2.2e-16
+  
+# Like Provided, but without Date  
+  # use caution: Age, DWT correlated
+AgeDWTIndex.lm <- lm(SalePrice ~ AgeAtSale + DWT + Index, data=ships) 
+  summary(AgeDWTIndex.lm)
+    # Multiple R-squared:  0.9204,	Adjusted R-squared:  0.915
+    # F-statistic:   169.7 on 3 and 44 DF,  p-value: < 2.2e-16
+
+# based on Age, Index, Speed
+AgeIndexSpeed.lm <- lm(SalePrice ~ AgeAtSale + Index + Speed, data=ships) 
+  summary(AgeIndexSpeed.lm)
+    # Multiple R-squared:  0.908,	Adjusted R-squared:  0.9017 
+    # F-statistic: 144.7 on 3 and 44 DF,  p-value: < 2.2e-16
+
+# Age DWT Index Speed
+AgeDWTIndexSpeed.lm <- lm(SalePrice ~ AgeAtSale + + DWT + Index + Speed, data=ships) 
+  summary(AgeDWTIndexSpeed.lm)
+    # Multiple R-squared:  0.9212,	Adjusted R-squared:  0.9139 
+    # F-statistic: 125.7 on 4 and 43 DF,  p-value: < 2.2e-16
+
+# based on Age and Index
+AgeIndex.lm <- lm(SalePrice ~ AgeAtSale + Index, data=ships) 
+  summary(AgeIndex.lm)
+    # Multiple R-squared:  0.9078,	Adjusted R-squared:  0.9037
+    # F-statistic:   221.5 on 2 and 45 DF,  p-value: < 2.2e-16
+# Best 2-independent variable model
+
+# use caution: Age, DWT correlated
+AgeDWT.lm <- lm(SalePrice ~ AgeAtSale + DWT, data=ships) 
+  summary(AgeDWT.lm)
+    # Multiple R-squared:  0.6578,	Adjusted R-squared:  0.6426
+    # F-statistic:   43.26 on 2 and 45 DF,  p-value: < 3.311e-11
+
+# try using tons instead of DWT?
+AgeTons.lm <- lm(SalePrice ~ AgeAtSale + Tons, data=ships) 
+  summary(AgeTons.lm)
+    # Multiple R-squared:  0.6454,	Adjusted R-squared:  0.6296 
+    # F-statistic: 40.95 on 2 and 45 DF,  p-value: 7.4e-11
+# Close to DWT, but not as good
+
+
+#--------------------------------------------------------------------------------------------------
+### Compare top models
+anova(All.lm, Provided.lm)
+  #   Res.Df    RSS Df Sum of Sq      F Pr(>F)
+  # 1     38 4069.1                           
+  # 2     43 4268.7 -5   -199.59 0.3728 0.8641
+# Speed, Draught, Tons, Length, Width do NOT provide a significant improvement; 
+  # might as well use Provided
+  
+anova(Provided.lm, AgeDWTIndex.lm)
+  #   Res.Df    RSS Df Sum of Sq      F Pr(>F)
+  # 1     43 4268.7                           
+  # 2     44 4296.3 -1   -27.691 0.2789 0.6001
+# Date does NOT provide a significant improvement;
+  # might as well use AgeDWTIndex.lm
+
+anova(AgeDWTIndex.lm, AgeIndex.lm)
+  #   Res.Df    RSS Df Sum of Sq      F  Pr(>F)  
+  # 1     44 4296.3                              
+  # 2     45 4978.5 -1   -682.17 6.9862 0.01134 *
+# DWT *DOES* provide a significant improvement
+
+AIC(All.lm, Provided.lm, AgeDWTIndex.lm, AgeIndex.lm, AgeDWTIndexSpeed.lm, AgeDWT.lm)
+  #                     df      AIC
+  # All.lm              11 371.3365
+  # Provided.lm          6 363.6351
+  # AgeDWTIndex.lm       5 361.9454
+  # AgeIndex.lm          4 367.0190
+  # AgeDWTIndexSpeed.lm  6 363.4785
+  # AgeDWT.lm            4 429.9626
+
+BIC(All.lm, Provided.lm, AgeDWTIndex.lm, AgeIndex.lm, AgeDWTIndexSpeed.lm, AgeDWT.lm)
+  #                     df      BIC
+  # All.lm              11 391.9197
+  # Provided.lm          6 374.8623
+  # AgeDWTIndex.lm       5 371.3014
+  # AgeIndex.lm          4 374.5038
+  # AgeDWTIndexSpeed.lm  6 374.7057
+  # AgeDWT.lm            4 437.4474
+
+
+### By all accounts, AgeDWTIndex is the best model, followed by AgeDWTIndexSpeed and Provided
+### Index is quite powerful, which means we need to be careful how we use it because it's not
+  # a typical part of the standard Market Approach
+
+# Look at relative importances
+calc.relimp(AgeDWTIndex.lm,
+            type="last",
+   rela=TRUE)
+
+# Bootstrap Measures of Relative Importance (1000 samples) 
+boot <- boot.relimp(AgeDWTIndex.lm, b = 1000, 
+                    type = "last", rank = TRUE, 
+  diff = TRUE, rela = TRUE)
+booteval.relimp(boot) # print result
+plot(booteval.relimp(boot,sort=TRUE)) # plot result
+
+### Age provides the majority of the relationship (~65%), while Index seems to act as an amplifier
+
+#--------------------------------------------------------------------------------------------------
+### Predict Price
+source("predictor.R")
+
+# create Bet Performer record
+BetPerformer <- data.frame(SalesDate=39578,
+                           Name="Bet Performer",
+                           SalePrice=NA,
+                           YearBuilt=1997,
+                           AgeAtSale=11,
+                           DWT=172,
+                           Index=12479,
+                           Speed=9.6,
+                           Draught=5.4,
+                           Tons=87120,
+                           USD_Units=NA,
+                           Units_USD=NA,
+                           Length=272, 
+                           Width=42.7)
+# use final capesize index (12,479) (interesting note: the market crashed HARD after peak in 2008)
+  # speed, draught, gross tons, length, width are averages of ships within 2,000 DWT of Bet Performer (170,174.9):
+    # Ingenious, Cape Kassos, Nightflight, Formosabulk Brave, Formosabulk Clement, Sumihou, Cape Sun,
+    # Gran Trader, Fertilia, Gran Trader, Jin Tai, Zorbas II, TMT TBN
+  # I don't understand Units/Dollar / Dollar/Unit so leaving blank
+# date is 14009, corresponding to 10 May, 2008
+
+######################################################
+###  do we want "confidence" or "prediction"?      ###
+######################################################
+
+predict(AgeDWTIndex.lm, BetPerformer, interval="confidence")
+  #       fit      lwr      upr
+  #  125.8295 118.8899 132.7692
+
+predict(AgeDWTIndexSpeed.lm, BetPerformer, interval="confidence")
+  #       fit      lwr      upr
+  #  125.8462 118.8441 132.8483
+
+predict(Provided.lm, BetPerformer, interval="confidence")
+  #       fit      lwr      upr
+  #  125.8462 118.8441 132.8483
+
+predict(AgeIndex.lm, BetPerformer, interval="confidence")
+  #       fit      lwr     upr
+  #  124.8718 117.5306 132.213
+
+predict(AgeDWT.lm, BetPerformer, interval="confidence")
+  #       fit      lwr      upr
+  #  90.52166 83.05106 97.99227
+# the model without influence of the Index comes in at a much lower price!
+
+### We have lower and upper limits that are caused by the error in our model.  One way to think of
+### this is that there's about 10% variance that even the best model does not account for.  Things
+### like Condition, number of hatches, crew requirements could all influence the price (and would be
+### unaccounted for in our model).
+
+### Additionally, the model is very sensitive to changes in the Capesize Index (Age and DWT are
+### functions of the ship and can't change, while Capesize Index is highly variable).  It has quite
+### a large influence on price (~33%).  With the current rapid inflation of the Capesize Index, it
+### may not be the wisest time to buy a ship.  Do the buyers anticipate a bubble?  If so, they
+### should wait until it bursts (buy low, sell high).
+    ### *** try running the model with different values for index to see just how variable it is
+
+#--------------------------------------------------------------------------------------------------
+
+#--------------------------------------------------------------------------------------------------
+### Standard EOF
+# Detach ships from search path!
+detach()
+
+

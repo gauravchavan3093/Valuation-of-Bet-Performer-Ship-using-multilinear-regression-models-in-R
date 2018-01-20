@@ -1,0 +1,74 @@
+---
+title: "Stat 610 Class Project"
+author: "Andrew Armstrong, Gaurav Chavan, Shashank Gupta, Alexander Graber, Faiz Nassur, Sandeep Suresh"
+date: "11/9/2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+*Who is Tom Roberts?*
+Founding partner of Compass Maritime Services, a New Jersey–based firm specializing in the sale and purchase of ships and offshore vessels (“S&P brokers”).
+
+*What is the task at hand for Basil Karatzas?*
+Identify a specific ship and suggest a reasonable price to offer, and have some suggestions regarding the negotiation strategy.
+
+*What ship features determine comparability (and value)?*
+Ship type (e.g., capesize vs. Panamax)
+Age (typical max of 25 years)
+Size (measured in deadweight tons (DWT)
+Condition
+
+*What is the market approach to valuation?*
+Sets value equaled the market price of a recently completed sale of a comparable ship between a willing and knowledgeable buyer and a willing and knowledgeable seller in an arm’s-length transaction
+
+In normalized and efficient markets, the price of a vessel is simply what a buyer, cognizant of the relevant facts and under no compulsion to act, would pay to acquire the asset from a knowledgeable seller equally under no compulsion to act. . . . [Both] the commercial and the academic values usually converge to the purchase price that a rational, well-informed investor (buyer) would pay for the acquisition of the vessel.
+
+
+**Key Questions to Think About the Next 4 Weeks**
+*1. How much is the Bet Performer worth based on comparable transactions? Which ship is the best reference transaction?*
+Martha Verity, Sumihou, Ingenious, Cape Sun
+*2. Can you think of other factors that may affect ship prices?*
+*3. What is the relationship between ship price and each ship feature in Exhibit 4?  What is the economic logic for why each feature might affect ship price?*
+*4. Which single feature is the best predictor of ship price?*
+*5. How well do all three ship features jointly explain ship prices?*
+*6. What would the price be if the ship was 5 years younger? 20K Deadweight Tons lighter? Or if charter rates were 30% lower?*
+*7. If you were Basil Karatzas, what would you recommend to your client regarding an offer price for the Bet Performer?*
+*8. What other concerns or recommendations do you have?*
+
+**Additional Questions**
+*A) Which ship features are highly correlated and what implications does that have for Basil? *
+Sale price and Age
+
+*B) Choose sale price and sale date (use 1 for Jan-07, 2 for Feb-07, etc. ) and perform a Simple Linear Regression.  Choose the y and x variable. *
+*Why did you make that choice? Interpret the values of the slope and intercept in a sentence each.*
+*Write out the hypothesis that you will want to test (is it different than 0?).*
+*Do you think they are significantly different than 0? Why? *
+
+*C) Use ANOVA to test whether the means are equal for sale price, deadweight tons, and Capesize Index.  Please comment on your results and the usefulness of this analysis to solving the case study.*
+*Is it an appropriate application of ANOVA?  What are the populations? If not, test whether the average sale price is different for ships sold in 2007 versus 2008.*
+THis is not an appropriate use of ANOVA since the metrics are completely different.  Instead, we should use ANOVA within a given metric (within age, or within size) to understand differences between groups 
+*What the meaning of your ANOVA analysis is to the prospective client.*
+
+*D) Let’s say I am interested in the proportion of ships that sold over $100 million during the time period of the data set because I really love expensive ships.*  **Assume the data set given is a random sample of all ships out there on the seas.** *Please provide a confidence interval your estimate so that I can think about ALL the ships out there on the sea if they were to sell very shortly. I used to not be very good at statistics, so please explain to me what this confidence interval means. *
+
+*E) Think hard about this one. Basil is interested in proposing a price to a client so that the client can buy the Bet Performer. *
+*You performed a few analyses in the previous steps, but what didn’t we do? *
+*What kind of quantitative analyses should we do if we were to present our data-driven recommendations later for buying the Bet Performer? *
+*What holes or weaknesses were present in our current analyses?  *
+Try to be mutually exclusive and comprehensively exhaustive in your project. 
+
+**DUE DEC 7***
+5-page executive summary
+  - objectives
+  - conclusion/recommendation
+      - standard "market approach" (look for equivalent ship and estimate value) vs. data-driven market approach
+  - how to do the business (options for next steps)
+  - additional details (explain models, confidence, r^2 values, etc.)
+    - standard "market approach" 
+  - background, methodology overview
+in-class presentation

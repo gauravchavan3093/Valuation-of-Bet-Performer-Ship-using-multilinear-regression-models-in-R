@@ -1,0 +1,12 @@
+predictor <- function (lm, x) {
+  # this function takes in a linear model object and a vector of input values
+  
+  # assign coefficients to a new list
+  lm_coefs <- coef(lm)
+  
+  # calculate predicted price based on provided model
+  price <- as.numeric(lm_coefs[1]+sum(x*lm_coefs[-1]))
+
+  #return resulting predicted price
+  return(price)
+}
